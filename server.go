@@ -199,6 +199,11 @@ func (s *Server) HEAD(path string, handler http.HandlerFunc) {
 	s.handlers.HEAD(path, f(s.recoverPanic(s.log(handler))))
 }
 
+func (s *Server) HEADGET(path string, handler http.HandlerFunc) {
+	s.handlers.HEAD(path, f(s.recoverPanic(s.log(handler))))
+	s.handlers.GET(path, f(s.recoverPanic(s.log(handler))))
+}
+
 func (s *Server) POST(path string, handler http.HandlerFunc) {
 	s.handlers.POST(path, f(s.recoverPanic(s.log(handler))))
 }
