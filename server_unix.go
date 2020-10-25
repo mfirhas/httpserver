@@ -1,6 +1,6 @@
 // +build darwin linux freebsd openbsd netbsd
 
-package server
+package httpserver
 
 import (
 	"fmt"
