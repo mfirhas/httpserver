@@ -25,7 +25,10 @@ type Server struct {
 	enableLogger bool
 	logger       *log.Logger
 	cors         *_cors.Cors
+	middlewares  []Middleware
 }
+
+type Middleware func(http.HandlerFunc) http.HandlerFunc
 
 type Opts struct {
 	Port uint16
@@ -191,35 +194,35 @@ func ResponseString(w http.ResponseWriter, r *http.Request, statusCode int, body
 	fmt.Fprintf(w, "%v", body)
 }
 
-func (s *Server) GET(path string, handler http.HandlerFunc) {
-	s.handlers.GET(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) GET(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.GET(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) HEAD(path string, handler http.HandlerFunc) {
-	s.handlers.HEAD(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) HEAD(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.HEAD(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) HEADGET(path string, handler http.HandlerFunc) {
-	s.handlers.HEAD(path, f(s.recoverPanic(s.log(handler))))
-	s.handlers.GET(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) HEADGET(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.HEAD(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.GET(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) POST(path string, handler http.HandlerFunc) {
-	s.handlers.POST(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) POST(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.POST(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) PUT(path string, handler http.HandlerFunc) {
-	s.handlers.POST(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) PUT(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.POST(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) DELETE(path string, handler http.HandlerFunc) {
-	s.handlers.DELETE(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) DELETE(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.DELETE(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) PATCH(path string, handler http.HandlerFunc) {
-	s.handlers.PATCH(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) PATCH(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.PATCH(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
 
-func (s *Server) OPTIONS(path string, handler http.HandlerFunc) {
-	s.handlers.OPTIONS(path, f(s.recoverPanic(s.log(handler))))
+func (s *Server) OPTIONS(path string, handler http.HandlerFunc, middlewares ...Middleware) {
+	s.handlers.OPTIONS(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
 }
