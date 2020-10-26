@@ -81,10 +81,15 @@ func New(opts *Opts) *Server {
 	}
 }
 
-// Run the server. Blocking. Execute it inside goroutine.
+// Run the server. Blocking.
 func (s *Server) Run() {
 	// TODO add SO_REUSEPORT support
-	s.errChan <- s.serve()
+	s.logger.Printf("httpserver: starting...")
+	s.logger.Printf("httpserver: running on port %d", s.port)
+	if err := s.serve(); err != nil {
+		s.logger.Printf("httpserver: failed starting with error: %v", err)
+		s.errChan <- err
+	}
 }
 
 func (s *Server) ListenError() <-chan error {
