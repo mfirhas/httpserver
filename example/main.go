@@ -14,7 +14,13 @@ func main() {
 		EnableLogger: true,
 		IdleTimeout:  10,
 	})
-
+	msrv := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This is middleware for all handlers in this server")
+			next(w, r)
+		}
+	}
+	srv.Use(msrv)
 	m1 := func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("This middleware m1 : ", os.Getpid())
