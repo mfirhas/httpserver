@@ -87,7 +87,7 @@ func (s *Server) Run() {
 	s.logger.Printf("httpserver: starting...")
 	s.logger.Printf("httpserver: running on port %d", s.port)
 	if err := s.serve(); err != nil {
-		s.logger.Printf("httpserver: failed starting with error: %v", err)
+		s.logger.Printf("httpserver: failed with error: %v", err)
 		s.errChan <- err
 	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	_httpserver "github.com/mfathirirhas/httpserver"
 )
@@ -14,7 +15,13 @@ func main() {
 		IdleTimeout:  10,
 	})
 
-	srv.GET("/handler1", Handler1)
+	m1 := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This middleware m1 : ", os.Getpid())
+			next(w, r)
+		}
+	}
+	srv.GET("/handler1", Handler1, m1)
 	srv.POST("/handler2", Handler2)
 	srv.Run()
 }
