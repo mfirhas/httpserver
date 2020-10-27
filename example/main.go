@@ -23,6 +23,21 @@ func main() {
 	}
 	srv.GET("/handler1", Handler1, m1)
 	srv.POST("/handler2", Handler2)
+	mg1 := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This is group 1 middleware: ", os.Getpid())
+			next(w, r)
+		}
+	}
+	g1 := srv.Group("/v1", mg1)
+	g1.GET("/handler1", Handler1)
+	gh2 := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This is group 1 handler 2 middleware: ", os.Getpid())
+			next(w, r)
+		}
+	}
+	g1.POST("/handler2", Handler2, gh2)
 	srv.Run()
 }
 
