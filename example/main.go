@@ -8,12 +8,22 @@ import (
 	_httpserver "github.com/mfathirirhas/httpserver"
 )
 
+// /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key
+// /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.csr
+// /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt
+// openssl req  -new  -newkey rsa:2048  -nodes  -keyout /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key  -out /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.csr
+// openssl  x509  -req  -days 365  -in /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.csr  -signkey /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key  -out /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt
+
 func main() {
 	srv := _httpserver.New(&_httpserver.Opts{
 		Port:         8080,
 		EnableLogger: true,
 		IdleTimeout:  10,
 	})
+	// srv.TLSConfig(
+	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt",
+	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key",
+	// )
 	msrv := func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("This is middleware for all handlers in this server")

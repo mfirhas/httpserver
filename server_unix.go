@@ -3,6 +3,7 @@
 package httpserver
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 
@@ -10,9 +11,12 @@ import (
 )
 
 func (s *Server) serve() error {
+	var tlsConfig *tls.Config
+	tlsConfig = s.tls
 	return _grace.Serve(&http.Server{
 		Addr:        fmt.Sprintf(":%d", s.port),
 		Handler:     s.cors.Handler(s.handlers),
 		IdleTimeout: s.idleTimeout,
+		TLSConfig:   tlsConfig,
 	})
 }

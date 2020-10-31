@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,8 +16,6 @@ import (
 	_cors "github.com/rs/cors"
 )
 
-// TODO add tls support
-
 type Server struct {
 	handlers     *_router.Router
 	errChan      chan error
@@ -24,6 +23,7 @@ type Server struct {
 	idleTimeout  time.Duration
 	enableLogger bool
 	logger       *log.Logger
+	tls          *tls.Config
 	cors         *_cors.Cors
 	middlewares  []Middleware
 }
@@ -38,6 +38,9 @@ type Opts struct {
 
 	// IdleTimeout keep-alive timeout while waiting for the next request coming. If empty then no timeout.
 	IdleTimeout time.Duration
+
+	// TLS to enable HTTPS
+	TLS *tls.Config
 
 	// Cors optional, can be nil, if nil then default will be set.
 	Cors *Cors
@@ -76,6 +79,7 @@ func New(opts *Opts) *Server {
 		idleTimeout:  opts.IdleTimeout,
 		enableLogger: opts.EnableLogger,
 		logger:       logger,
+		tls:          opts.TLS,
 		cors:         cors,
 		errChan:      make(chan error),
 	}
@@ -94,6 +98,19 @@ func (s *Server) Run() {
 
 func (s *Server) ListenError() <-chan error {
 	return s.errChan
+}
+
+// TLSConfig generate certificate config using provided certificate and private key.
+// It will overwrite the one set in Opts.
+func (s *Server) TLSConfig(cert, key string) error {
+	certificate, err := tls.LoadX509KeyPair(cert, key)
+	if err != nil {
+		return err
+	}
+	s.tls = &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+	}
+	return nil
 }
 
 type responseWriter struct {
