@@ -1,6 +1,8 @@
 package httpserver
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func (s *Server) Use(m ...Middleware) {
 	for _, v := range m {

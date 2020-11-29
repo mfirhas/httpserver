@@ -59,7 +59,7 @@ type Cors struct {
 
 func New(opts *Opts) *Server {
 	h := _router.New()
-	cors := _cors.Default()
+	var cors *_cors.Cors
 	if opts.Cors != nil {
 		cors = _cors.New(_cors.Options{
 			AllowedOrigins:     opts.Cors.AllowedOrigins,
@@ -72,17 +72,21 @@ func New(opts *Opts) *Server {
 			Debug:              opts.Cors.IsDebug,
 		})
 	}
-	logger := log.New(os.Stderr, "", 0)
-	return &Server{
+	srv := &Server{
 		handlers:     h,
 		port:         opts.Port,
 		idleTimeout:  opts.IdleTimeout,
 		enableLogger: opts.EnableLogger,
-		logger:       logger,
+		middlewares:  make([]Middleware, 0),
 		tls:          opts.TLS,
 		cors:         cors,
 		errChan:      make(chan error),
 	}
+	if opts.EnableLogger {
+		srv.logger = log.New(os.Stderr, "", 0)
+		srv.middlewares = append(srv.middlewares, srv.log)
+	}
+	return srv
 }
 
 // Run the server. Blocking.
@@ -148,28 +152,6 @@ func f(next http.HandlerFunc) _router.Handle {
 	}
 }
 
-func (s *Server) log(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next(w, r)
-		elapsed := time.Since(start)
-		var statusCode int
-		rw, ok := w.(*responseWriter)
-		if !ok { // impossible...!!! but let be safe.
-			statusCode = http.StatusOK // default http.ResponseWriter status code
-		} else {
-			statusCode = rw.statusCode
-		}
-		if s.enableLogger {
-			if statusCode >= 400 {
-				s.logger.Printf("%s | httpserver | %s | %d | %s | %v | %s\n", time.Now().Format(time.RFC3339), r.Method, statusCode, r.URL.Path, elapsed, r.Header.Get("Request-Id"))
-			} else {
-				fmt.Printf("%s | httpserver | %s | %d | %s | %v | %s\n", time.Now().Format(time.RFC3339), r.Method, statusCode, r.URL.Path, elapsed, r.Header.Get("Request-Id"))
-			}
-		}
-	}
-}
-
 func (s *Server) recoverPanic(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -217,34 +199,34 @@ func ResponseString(w http.ResponseWriter, r *http.Request, statusCode int, body
 }
 
 func (s *Server) GET(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.GET(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.GET(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) HEAD(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.HEAD(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.HEAD(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) HEADGET(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.HEAD(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
-	s.handlers.GET(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.HEAD(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
+	s.handlers.GET(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) POST(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.POST(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.POST(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) PUT(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.POST(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.POST(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) DELETE(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.DELETE(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.DELETE(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) PATCH(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.PATCH(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.PATCH(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) OPTIONS(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.OPTIONS(path, f(s.recoverPanic(s.log(s.chainMiddlewares(handler, middlewares...)))))
+	s.handlers.OPTIONS(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
