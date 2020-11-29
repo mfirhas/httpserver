@@ -17,15 +17,14 @@ import (
 )
 
 type Server struct {
-	handlers     *_router.Router
-	errChan      chan error
-	port         uint16
-	idleTimeout  time.Duration
-	enableLogger bool
-	logger       *log.Logger
-	tls          *tls.Config
-	cors         *_cors.Cors
-	middlewares  []Middleware
+	handlers    *_router.Router
+	errChan     chan error
+	port        uint16
+	idleTimeout time.Duration
+	logger      *log.Logger
+	tls         *tls.Config
+	cors        *_cors.Cors
+	middlewares []Middleware
 }
 
 type Middleware func(http.HandlerFunc) http.HandlerFunc
@@ -73,17 +72,16 @@ func New(opts *Opts) *Server {
 		})
 	}
 	srv := &Server{
-		handlers:     h,
-		port:         opts.Port,
-		idleTimeout:  opts.IdleTimeout,
-		enableLogger: opts.EnableLogger,
-		middlewares:  make([]Middleware, 0),
-		tls:          opts.TLS,
-		cors:         cors,
-		errChan:      make(chan error),
+		handlers:    h,
+		port:        opts.Port,
+		idleTimeout: opts.IdleTimeout,
+		logger:      log.New(os.Stderr, "", 0),
+		middlewares: make([]Middleware, 0),
+		tls:         opts.TLS,
+		cors:        cors,
+		errChan:     make(chan error),
 	}
 	if opts.EnableLogger {
-		srv.logger = log.New(os.Stderr, "", 0)
 		srv.middlewares = append(srv.middlewares, srv.log)
 	}
 	return srv
