@@ -16,6 +16,8 @@ import (
 	_cors "github.com/rs/cors"
 )
 
+// TODO add SO_REUSEPORT support
+
 type Server struct {
 	handlers    *_router.Router
 	errChan     chan error
@@ -82,6 +84,9 @@ func New(opts *Opts) *Server {
 		errChan:     make(chan error),
 	}
 	if opts.EnableLogger {
+		w := make(buffer, 10<<20)
+		go write(w)
+		srv.logger = log.New(w, "", 0)
 		srv.middlewares = append(srv.middlewares, srv.log)
 	}
 	return srv
@@ -89,11 +94,10 @@ func New(opts *Opts) *Server {
 
 // Run the server. Blocking.
 func (s *Server) Run() {
-	// TODO add SO_REUSEPORT support
-	s.logger.Printf("httpserver: starting...")
-	s.logger.Printf("httpserver: running on port %d", s.port)
+	s.logger.Printf("%s | httpserver | server is starting...", time.Now().Format(time.RFC3339))
+	s.logger.Printf("%s | httpserver | server is running on port %d", time.Now().Format(time.RFC3339), s.port)
 	if err := s.serve(); err != nil {
-		s.logger.Printf("httpserver: failed with error: %v", err)
+		s.logger.Printf("%s | httpserver | server failed with error: %v", time.Now().Format(time.RFC3339), err)
 		s.errChan <- err
 	}
 }
