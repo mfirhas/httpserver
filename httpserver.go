@@ -189,6 +189,7 @@ func Response(w http.ResponseWriter, r *http.Request, statusCode int, body []byt
 // If you have []byte as response body, then use Response function instead.
 // Call at the end line of your handler.
 func ResponseJSON(w http.ResponseWriter, r *http.Request, statusCode int, body interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
 	responseHeader(w, r, statusCode)
 	return json.NewEncoder(w).Encode(body)
 }
