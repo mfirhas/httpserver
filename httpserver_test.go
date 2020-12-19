@@ -165,3 +165,7 @@ func TestPATCH(t *testing.T) {
 func TestOPTIONS(t *testing.T) {
 	testSrv.OPTIONS("/options", testHandler, TestMiddleware)
 }
+
+func TestFILES(t *testing.T) {
+	testSrv.FILES("/this/*filepath", "/var/www/")
+}

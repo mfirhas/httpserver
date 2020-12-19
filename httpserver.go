@@ -233,3 +233,11 @@ func (s *Server) PATCH(path string, handler http.HandlerFunc, middlewares ...Mid
 func (s *Server) OPTIONS(path string, handler http.HandlerFunc, middlewares ...Middleware) {
 	s.handlers.OPTIONS(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
+
+// FILES serve files from 1 directory dynamically.
+// @filePath: must end with '/*filepath' as placeholder for filename to be accessed.
+// @rootPath: root directory where @filepath locate.
+func (s *Server) FILES(filePath string, rootPath string) {
+	rootDir := http.Dir(rootPath)
+	s.handlers.ServeFiles(filePath, rootDir)
+}
