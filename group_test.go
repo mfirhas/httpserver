@@ -42,3 +42,7 @@ func TestGroupPATCH(t *testing.T) {
 func TestGroupOPTIONS(t *testing.T) {
 	group.OPTIONS("/options", testHandler, TestMiddleware)
 }
+
+func TestGroupFILES(t *testing.T) {
+	group.FILES("/test/*filepath", "/test/")
+}
