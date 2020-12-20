@@ -237,7 +237,17 @@ func (s *Server) OPTIONS(path string, handler http.HandlerFunc, middlewares ...M
 // FILES serve files from 1 directory dynamically.
 // @filePath: must end with '/*filepath' as placeholder for filename to be accessed.
 // @rootPath: root directory where @filepath locate.
-func (s *Server) FILES(filePath string, rootPath string) {
+func (s *Server) FILES(filePath string, rootPath string, middlewares ...Middleware) {
+
+	if len(filePath) < 10 || filePath[len(filePath)-10:] != "/*filepath" {
+		panic("path must end with /*filepath in path '" + filePath + "'")
+	}
+
 	rootDir := http.Dir(rootPath)
-	s.handlers.ServeFiles(filePath, rootDir)
+	fileServer := http.FileServer(rootDir)
+
+	s.GET(filePath, func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = r.URL.Query().Get("filepath")
+		fileServer.ServeHTTP(w, r)
+	}, middlewares...)
 }

@@ -166,6 +166,17 @@ func TestOPTIONS(t *testing.T) {
 	testSrv.OPTIONS("/options", testHandler, TestMiddleware)
 }
 
-func TestFILES(t *testing.T) {
-	testSrv.FILES("/this/*filepath", "/var/www/")
+func TestFILES_OnSuccess(t *testing.T) {
+	testSrv.FILES("/test/*filepath", "/test/")
+	go testSrv.Run()
+	go testSrv.Run()
+}
+
+func TestFILES_OnFailed(t *testing.T) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("expected")
+		}
+	}()
+	testSrv.FILES("/test/*filepat", "/test/")
 }

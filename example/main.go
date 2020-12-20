@@ -37,6 +37,8 @@ func main() {
 			next(w, r)
 		}
 	}
+	// serve files inside example/
+	srv.FILES("/html/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/")
 	srv.GET("/handler1", Handler1, m1)
 	srv.POST("/handler2", Handler2)
 	mg1 := func(next http.HandlerFunc) http.HandlerFunc {
