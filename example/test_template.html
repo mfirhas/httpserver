@@ -1,0 +1,31 @@
+{{ .header }}
+<body>
+<h1>Boolean and data string</h1>
+{{ if .isShow }}
+    <h1> This should be shown</h1>
+    <h2> {{ .dataString }}</h2>
+{{ end }}
+
+<h1>Range data</h1>
+{{ range $i, $li := .data }}
+    {{ if eq $i 0 }}
+        <h2>First index: $li</h2>
+    {{ else }}
+        <h2>$i: $li</h2>
+    {{ end }}
+{{ end }}
+
+<h1>Struct data</h1>
+<h2>{{ .person.name }}</h2>
+<h2>{{ .person.age }}</h2>
+<h2>{{ .person.email }}</h2>
+<h2>{{ .person.phone }}</h2>
+
+</body>
+{{ template "footer" }}
+
+<!-- define template component -->
+{{ define "footer" }}
+<footer><p>Copyright 2020</p></footer>
+</html>
+{{ end }}

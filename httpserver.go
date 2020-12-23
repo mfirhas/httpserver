@@ -1,9 +1,12 @@
 package httpserver
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -199,6 +202,62 @@ func ResponseJSON(w http.ResponseWriter, r *http.Request, statusCode int, body i
 func ResponseString(w http.ResponseWriter, r *http.Request, statusCode int, body interface{}) {
 	responseHeader(w, r, statusCode)
 	fmt.Fprintf(w, "%v", body)
+}
+
+// ResponseHTML render and return html with given data.
+// @tmplName: template name if a template is wrapped inside {{ define "tmplName" }}, otherwise empty string.
+// @tmpl: template content in form of string loaded from template file.
+// @data: data to be embedded into html template, preferably in form of map[string]interface{}.
+// @funcMap: golang template FuncMap.
+func ResponseHTML(w http.ResponseWriter, tmplName string, tmpl string, data interface{},
+	funcMap ...template.FuncMap) error {
+
+	html, err := RenderHTML(tmplName, tmpl, data, funcMap...)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, html)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// RenderHTML render template with given data into string.
+// @tmplName: template name if a template is wrapped inside {{ define "tmplName" }}, otherwise empty string.
+// @tmpl: template content in form of string loaded from template file.
+// @data: data to be embedded into html template, preferably in form of map[string]interface{}.
+// @funcMap: golang template FuncMap.
+func RenderHTML(tmplName string, tmpl string, data interface{}, funcMap ...template.FuncMap) (template.HTML, error) {
+	var (
+		t    *template.Template
+		buff bytes.Buffer
+		err  error
+	)
+
+	t = template.New(tmplName)
+	for _, v := range funcMap {
+		t = t.Funcs(v)
+	}
+
+	t, err = t.Parse(tmpl)
+	if err != nil {
+		return "", err
+	}
+
+	if err = t.Execute(&buff, data); err != nil {
+		return "", err
+	}
+
+	return template.HTML(buff.String()), nil
+}
+
+func LoadTemplate(path string) (string, error) {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
 
 func (s *Server) GET(path string, handler http.HandlerFunc, middlewares ...Middleware) {

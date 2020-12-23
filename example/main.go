@@ -58,6 +58,8 @@ func main() {
 		}
 	}
 	g1.POST("/handler2", Handler2, gh2)
+	srv.GET("/single-template", HandlerSingleTemplate)
+	srv.GET("/multi-template", HandlerMultipleTemplate)
 	srv.Run()
 }
 
@@ -79,4 +81,29 @@ func Handler2(w http.ResponseWriter, r *http.Request) {
 	resp["body1"] = b1
 	resp["body2"] = b2
 	_httpserver.ResponseJSON(w, r, http.StatusOK, resp)
+}
+
+func HandlerSingleTemplate(w http.ResponseWriter, r *http.Request) {
+	htmlFile := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test.html"
+	tmpl, _ := _httpserver.LoadTemplate(htmlFile)
+	m := map[string]interface{}{
+		"this": "printThis",
+	}
+	fmt.Println(_httpserver.ResponseHTML(w, "test", tmpl, m))
+}
+
+func HandlerMultipleTemplate(w http.ResponseWriter, r *http.Request) {
+	headerFile := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test_template_header.html"
+	headerContent, _ := _httpserver.LoadTemplate(headerFile)
+	headerData := map[string]interface{}{
+		"pageTitle": "This is Title",
+	}
+	header, _ := _httpserver.RenderHTML("header", headerContent, headerData)
+	m := map[string]interface{}{
+		"header": header,
+	}
+
+	mainLayout := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test_template.html"
+	mainContent, _ := _httpserver.LoadTemplate(mainLayout)
+	_httpserver.ResponseHTML(w, "", mainContent, m)
 }
