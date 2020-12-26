@@ -252,6 +252,50 @@ func RenderHTML(tmplName string, tmpl string, data interface{}, funcMap ...templ
 	return template.HTML(buff.String()), nil
 }
 
+func ResponseMultiHTML(w http.ResponseWriter, mainTmplName string, tmplNameToTmpl map[string]string, data interface{}, funcMap ...template.FuncMap) error {
+	html, err := RenderMultiHTML(mainTmplName, tmplNameToTmpl, data, funcMap...)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, html)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RenderMultiHTML(mainTmplName string, tmplNameToTmpl map[string]string, data interface{}, funcMap ...template.FuncMap) (template.HTML, error) {
+	var (
+		t    *template.Template
+		buff bytes.Buffer
+		err  error
+	)
+
+	t = template.New(mainTmplName)
+	for _, v := range funcMap {
+		t = t.Funcs(v)
+	}
+	t, err = t.Parse(tmplNameToTmpl[mainTmplName])
+	if err != nil {
+		return "", err
+	}
+
+	for k, v := range tmplNameToTmpl {
+		if k != mainTmplName {
+			t, err = t.New(k).Parse(v)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	if err = t.ExecuteTemplate(&buff, mainTmplName, data); err != nil {
+		return "", err
+	}
+
+	return template.HTML(buff.String()), nil
+}
+
 func LoadTemplate(path string) (string, error) {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -204,3 +204,36 @@ func TestResponseHTML(t *testing.T) {
 	w := httptest.NewRecorder()
 	ResponseHTML(w, tmplName, tmpl, nil, funcMap)
 }
+
+func TestRenderMultiHTML(t *testing.T) {
+	tmplName := "test"
+	tmplNameToTmpl := map[string]string{
+		"test":  "<h1>test</h1>",
+		"test2": "<h2>test</h2>",
+	}
+	funcMap := template.FuncMap{
+		"f1": func() template.HTML {
+			return ""
+		},
+	}
+	RenderMultiHTML(tmplName, tmplNameToTmpl, nil, funcMap)
+}
+
+func TestResponseMultiHTML(t *testing.T) {
+	tmplName := "test"
+	tmplNameToTmpl := map[string]string{
+		"test":  "<h1>test</h1>",
+		"test2": "<h2>test</h2>",
+	}
+	funcMap := template.FuncMap{
+		"f1": func() template.HTML {
+			return ""
+		},
+	}
+	w := httptest.NewRecorder()
+	ResponseMultiHTML(w, tmplName, tmplNameToTmpl, nil, funcMap)
+}
+
+func TestLoadTemplate(t *testing.T) {
+	LoadTemplate("_")
+}
