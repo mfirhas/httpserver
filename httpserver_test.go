@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -179,4 +180,27 @@ func TestFILES_OnFailed(t *testing.T) {
 		}
 	}()
 	testSrv.FILES("/test/*filepat", "/test/")
+}
+
+func TestRenderHTML(t *testing.T) {
+	tmplName := "test"
+	tmpl := `<h1>Test</h1>`
+	funcMap := template.FuncMap{
+		"f1": func() template.HTML {
+			return ""
+		},
+	}
+	RenderHTML(tmplName, tmpl, nil, funcMap)
+}
+
+func TestResponseHTML(t *testing.T) {
+	tmplName := "test"
+	tmpl := `<h1>Test</h1>`
+	funcMap := template.FuncMap{
+		"f1": func() template.HTML {
+			return ""
+		},
+	}
+	w := httptest.NewRecorder()
+	ResponseHTML(w, tmplName, tmpl, nil, funcMap)
 }
