@@ -60,6 +60,7 @@ func main() {
 	g1.POST("/handler2", Handler2, gh2)
 	srv.GET("/single-template", HandlerSingleTemplate)
 	srv.GET("/multi-template", HandlerMultipleTemplate)
+	srv.GET("/multi-template-c", HandlerMultipleTemplateCombined)
 	srv.Run()
 }
 
@@ -106,4 +107,24 @@ func HandlerMultipleTemplate(w http.ResponseWriter, r *http.Request) {
 	mainLayout := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test_template.html"
 	mainContent, _ := _httpserver.LoadTemplate(mainLayout)
 	_httpserver.ResponseHTML(w, "", mainContent, m)
+}
+
+func HandlerMultipleTemplateCombined(w http.ResponseWriter, r *http.Request) {
+	headerFile := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test_multi_header.html"
+	headerContent, _ := _httpserver.LoadTemplate(headerFile)
+	footerFile := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test_multi_footer.html"
+	footerContent, _ := _httpserver.LoadTemplate(footerFile)
+	mainFile := "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/test_multi_main.html"
+	mainContent, _ := _httpserver.LoadTemplate(mainFile)
+
+	data := map[string]interface{}{
+		"pageTitle": "This is Title",
+	}
+	m := map[string]string{
+		"header": headerContent,
+		"footer": footerContent,
+		"main":   mainContent,
+	}
+
+	_httpserver.ResponseMultiHTML(w, "main", m, data)
 }
