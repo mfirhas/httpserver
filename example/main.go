@@ -19,6 +19,9 @@ func main() {
 		Port:         8080,
 		EnableLogger: true,
 		IdleTimeout:  10,
+		PanicHandler: func(w http.ResponseWriter, r *http.Request, rcv ...interface{}) {
+			fmt.Println("PANIX.................................!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+		},
 	})
 	// srv.TLSConfig(
 	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt",

@@ -17,6 +17,9 @@ func (s *Server) serve() error {
 	}
 	var tlsConfig *tls.Config
 	tlsConfig = s.tls
+	if s.notFoundHandler != nil {
+		s.handlers.NotFound = s.notFoundHandler
+	}
 	return _grace.Serve(&http.Server{
 		Addr:        fmt.Sprintf(":%d", s.port),
 		Handler:     handler,

@@ -18,8 +18,6 @@ import (
 	_cors "github.com/rs/cors"
 )
 
-// TODO add SO_REUSEPORT support
-
 type Server struct {
 	handlers    *_router.Router
 	errChan     chan error
@@ -29,6 +27,9 @@ type Server struct {
 	tls         *tls.Config
 	cors        *_cors.Cors
 	middlewares []Middleware
+
+	panicHandler    func(w http.ResponseWriter, r *http.Request, rcv ...interface{})
+	notFoundHandler http.Handler
 }
 
 type Middleware func(http.HandlerFunc) http.HandlerFunc
@@ -47,6 +48,14 @@ type Opts struct {
 
 	// Cors optional, can be nil, if nil then default will be set.
 	Cors *Cors
+
+	// PanicHandler triggered if panic happened.
+	// rcv: first param is argument retrieved from `recover()` function.
+	PanicHandler func(w http.ResponseWriter, r *http.Request, rcv ...interface{})
+
+	// NotFoundHandler triggered if path not found.
+	// If empty then default is used.
+	NotFoundHandler http.HandlerFunc
 }
 
 // Cors corst options
@@ -75,15 +84,21 @@ func New(opts *Opts) *Server {
 			Debug:              opts.Cors.IsDebug,
 		})
 	}
+	var notFoundHandler http.Handler
+	if opts.NotFoundHandler != nil {
+		notFoundHandler = &notFound{opts.NotFoundHandler}
+	}
 	srv := &Server{
-		handlers:    h,
-		port:        opts.Port,
-		idleTimeout: opts.IdleTimeout,
-		logger:      log.New(os.Stderr, "", 0),
-		middlewares: make([]Middleware, 0),
-		tls:         opts.TLS,
-		cors:        cors,
-		errChan:     make(chan error),
+		handlers:        h,
+		port:            opts.Port,
+		idleTimeout:     opts.IdleTimeout,
+		logger:          log.New(os.Stderr, "", 0),
+		middlewares:     make([]Middleware, 0),
+		tls:             opts.TLS,
+		cors:            cors,
+		errChan:         make(chan error),
+		panicHandler:    opts.PanicHandler,
+		notFoundHandler: notFoundHandler,
 	}
 	if opts.EnableLogger {
 		w := make(buffer, 10<<20)
@@ -106,6 +121,14 @@ func (s *Server) Run() {
 
 func (s *Server) ListenError() <-chan error {
 	return s.errChan
+}
+
+type notFound struct {
+	handler http.HandlerFunc
+}
+
+func (n *notFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	n.handler(w, r)
 }
 
 // TLSConfig generate certificate config using provided certificate and private key.
@@ -161,12 +184,15 @@ func f(next http.HandlerFunc) _router.Handle {
 func (s *Server) recoverPanic(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if err := recover(); err != nil {
+			if rcv := recover(); rcv != nil {
 				ResponseString(w, http.StatusInternalServerError, "httpserver got panic")
 				s.logger.Printf("%s | httpserver | %s | %s | %s | %s\n", time.Now().Format(time.RFC3339), "PANIC", r.Method, r.URL.Path, r.Header.Get("Request-Id"))
 				s.logger.Printf("☠️ ☠️ ☠️ ☠️ ☠️ ☠️  PANIC START (%s) ☠️ ☠️ ☠️ ☠️ ☠️ ☠️", r.Header.Get("Request-Id"))
 				debug.PrintStack()
 				s.logger.Printf("☠️ ☠️ ☠️ ☠️ ☠️ ☠️  PANIC END (%s) ☠️ ☠️ ☠️ ☠️ ☠️ ☠️", r.Header.Get("Request-Id"))
+				if s.panicHandler != nil {
+					s.panicHandler(w, r, rcv)
+				}
 				return
 			}
 		}()

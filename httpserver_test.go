@@ -21,9 +21,11 @@ func newServer() *Server {
 	go write(w)
 	cors := &Cors{}
 	srv := New(&Opts{
-		Port:         8080,
-		Cors:         cors,
-		EnableLogger: true,
+		Port:            8080,
+		Cors:            cors,
+		EnableLogger:    true,
+		PanicHandler:    func(w http.ResponseWriter, r *http.Request, rcv ...interface{}) {},
+		NotFoundHandler: func(w http.ResponseWriter, r *http.Request) {},
 	})
 	srv.Use(TestMiddleware)
 	return srv
@@ -109,7 +111,8 @@ func TestRecoverPanic(t *testing.T) {
 
 func TestResponseHeader(t *testing.T) {
 	w := &httptest.ResponseRecorder{}
-	responseHeader(w, 200)
+	rw := &responseWriter{w, 200, "", ""}
+	responseHeader(rw, 200)
 }
 
 func TestResponse(t *testing.T) {
