@@ -67,7 +67,7 @@ func main() {
 func Handler1(w http.ResponseWriter, r *http.Request) {
 	allHeaders := r.Header
 	allParams := r.URL.RawQuery
-	_httpserver.ResponseString(w, r, http.StatusOK, fmt.Sprintf("Handler1: %s | %s", allHeaders, allParams))
+	_httpserver.ResponseString(w, http.StatusOK, fmt.Sprintf("Handler1: %s | %s", allHeaders, allParams))
 }
 
 func Handler2(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func Handler2(w http.ResponseWriter, r *http.Request) {
 	resp["params"] = allParams
 	resp["body1"] = b1
 	resp["body2"] = b2
-	_httpserver.ResponseJSON(w, r, http.StatusOK, resp)
+	_httpserver.ResponseJSON(w, http.StatusOK, resp)
 }
 
 func HandlerSingleTemplate(w http.ResponseWriter, r *http.Request) {

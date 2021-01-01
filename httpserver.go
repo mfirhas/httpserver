@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"runtime/debug"
-	"strconv"
 	"time"
 
 	_uuid "github.com/google/uuid"
@@ -125,6 +124,8 @@ func (s *Server) TLSConfig(cert, key string) error {
 type responseWriter struct {
 	http.ResponseWriter
 	statusCode int
+	requestID  string
+	xRequestID string
 }
 
 func (rw *responseWriter) WriteHeader(statusCode int) {
@@ -132,9 +133,9 @@ func (rw *responseWriter) WriteHeader(statusCode int) {
 	rw.ResponseWriter.WriteHeader(statusCode)
 }
 
-func newResponseWriter(w http.ResponseWriter) *responseWriter {
+func newResponseWriter(w http.ResponseWriter, reqID string, xReqID string) *responseWriter {
 	// default if not set is 200
-	return &responseWriter{w, http.StatusOK}
+	return &responseWriter{w, http.StatusOK, reqID, xReqID}
 }
 
 func f(next http.HandlerFunc) _router.Handle {
@@ -152,7 +153,7 @@ func f(next http.HandlerFunc) _router.Handle {
 			}
 			r.URL.RawQuery = urlValues.Encode()
 		}
-		rw := newResponseWriter(w)
+		rw := newResponseWriter(w, r.Header.Get("Request-Id"), r.Header.Get("X-Request-Id"))
 		next(rw, r)
 	}
 }
@@ -161,7 +162,7 @@ func (s *Server) recoverPanic(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				ResponseString(w, r, http.StatusInternalServerError, "httpserver got panic")
+				ResponseString(w, http.StatusInternalServerError, "httpserver got panic")
 				s.logger.Printf("%s | httpserver | %s | %s | %s | %s\n", time.Now().Format(time.RFC3339), "PANIC", r.Method, r.URL.Path, r.Header.Get("Request-Id"))
 				s.logger.Printf("☠️ ☠️ ☠️ ☠️ ☠️ ☠️  PANIC START (%s) ☠️ ☠️ ☠️ ☠️ ☠️ ☠️", r.Header.Get("Request-Id"))
 				debug.PrintStack()
@@ -173,17 +174,22 @@ func (s *Server) recoverPanic(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func responseHeader(w http.ResponseWriter, r *http.Request, statusCode int) {
+func responseHeader(w http.ResponseWriter, statusCode int) {
 	w.Header().Set("Date", time.Now().Format(time.RFC1123))
-	w.Header().Set("Request-Id", r.Header.Get("Request-Id"))
-	w.Header().Set(fmt.Sprintf("X-Req-Id_%s-Status_code", r.Header.Get("Request-Id")), strconv.Itoa(statusCode))
+	rw, ok := w.(*responseWriter)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Request-Id", rw.requestID)
+	w.Header().Set("X-Request-Id", rw.xRequestID)
 	w.WriteHeader(statusCode)
 }
 
 // Response response by writing the body to http.ResponseWriter.
 // Call at the end line of your handler.
-func Response(w http.ResponseWriter, r *http.Request, statusCode int, body []byte) {
-	responseHeader(w, r, statusCode)
+func Response(w http.ResponseWriter, statusCode int, body []byte) {
+	responseHeader(w, statusCode)
 	w.Write(body)
 }
 
@@ -191,16 +197,16 @@ func Response(w http.ResponseWriter, r *http.Request, statusCode int, body []byt
 // Body must be either struct or map[string]interface{}. Otherwise would result in incorrect parsing at client side.
 // If you have []byte as response body, then use Response function instead.
 // Call at the end line of your handler.
-func ResponseJSON(w http.ResponseWriter, r *http.Request, statusCode int, body interface{}) error {
+func ResponseJSON(w http.ResponseWriter, statusCode int, body interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
-	responseHeader(w, r, statusCode)
+	responseHeader(w, statusCode)
 	return json.NewEncoder(w).Encode(body)
 }
 
 // ResponseString response in form of string whatever passed into body param.
 // Call at the end line of your handler.
-func ResponseString(w http.ResponseWriter, r *http.Request, statusCode int, body interface{}) {
-	responseHeader(w, r, statusCode)
+func ResponseString(w http.ResponseWriter, statusCode int, body interface{}) {
+	responseHeader(w, statusCode)
 	fmt.Fprintf(w, "%v", body)
 }
 
@@ -216,10 +222,7 @@ func ResponseHTML(w http.ResponseWriter, tmplName string, tmpl string, data inte
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprint(w, html)
-	if err != nil {
-		return err
-	}
+	ResponseString(w, http.StatusOK, html)
 	return nil
 }
 
@@ -257,10 +260,7 @@ func ResponseMultiHTML(w http.ResponseWriter, mainTmplName string, tmplNameToTmp
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprint(w, html)
-	if err != nil {
-		return err
-	}
+	ResponseString(w, http.StatusOK, html)
 	return nil
 }
 
