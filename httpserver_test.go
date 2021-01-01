@@ -109,28 +109,24 @@ func TestRecoverPanic(t *testing.T) {
 
 func TestResponseHeader(t *testing.T) {
 	w := &httptest.ResponseRecorder{}
-	r, _ := http.NewRequest("GET", "/health-check", nil)
-	responseHeader(w, r, 200)
+	responseHeader(w, 200)
 }
 
 func TestResponse(t *testing.T) {
 	w := &httptest.ResponseRecorder{}
-	r, _ := http.NewRequest("GET", "/health-check", nil)
-	Response(w, r, 200, []byte("test"))
+	Response(w, 200, []byte("test"))
 }
 
 func TestResponseJSON(t *testing.T) {
 	w := &httptest.ResponseRecorder{}
-	r, _ := http.NewRequest("GET", "/health-check", nil)
-	if err := ResponseJSON(w, r, 200, []byte("test")); err != nil {
+	if err := ResponseJSON(w, 200, []byte("test")); err != nil {
 		t.Errorf("%s expected null error, found not null", t.Name())
 	}
 }
 
 func TestResponseString(t *testing.T) {
 	w := &httptest.ResponseRecorder{}
-	r, _ := http.NewRequest("GET", "/health-check", nil)
-	ResponseString(w, r, 200, "string")
+	ResponseString(w, 200, "string")
 }
 
 var testSrv = newServer()

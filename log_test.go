@@ -32,6 +32,6 @@ func TestLog(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	h(w, r)
-	rw := newResponseWriter(w)
+	rw := newResponseWriter(w, "", "")
 	h(rw, r)
 }
