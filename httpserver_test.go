@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	TestMiddleware = func(next http.HandlerFunc) http.HandlerFunc {
+	TestMiddleware = func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {}
 	}
 )

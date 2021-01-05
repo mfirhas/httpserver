@@ -6,7 +6,7 @@ import (
 )
 
 func TestUse(t *testing.T) {
-	testM := func(http.HandlerFunc) http.HandlerFunc {
+	testM := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {}
 	}
 	s := newServer()

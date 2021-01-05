@@ -27,14 +27,14 @@ func main() {
 	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt",
 	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key",
 	// )
-	msrv := func(next http.HandlerFunc) http.HandlerFunc {
+	msrv := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("This is middleware for all handlers in this server")
 			next(w, r)
 		}
 	}
 	srv.Use(msrv)
-	m1 := func(next http.HandlerFunc) http.HandlerFunc {
+	m1 := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("This middleware m1 : ", os.Getpid())
 			next(w, r)
@@ -46,7 +46,7 @@ func main() {
 	jsFiles.FILES("/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/")
 	srv.GET("/handler1", Handler1, m1)
 	srv.POST("/handler2", Handler2)
-	mg1 := func(next http.HandlerFunc) http.HandlerFunc {
+	mg1 := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("This is group 1 middleware: ", os.Getpid())
 			next(w, r)
@@ -54,7 +54,7 @@ func main() {
 	}
 	g1 := srv.Group("/v1", mg1)
 	g1.GET("/handler1", Handler1)
-	gh2 := func(next http.HandlerFunc) http.HandlerFunc {
+	gh2 := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("This is group 1 handler 2 middleware: ", os.Getpid())
 			next(w, r)

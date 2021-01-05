@@ -32,7 +32,7 @@ type Server struct {
 	notFoundHandler http.Handler
 }
 
-type Middleware func(http.HandlerFunc) http.HandlerFunc
+type Middleware func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc
 
 type Opts struct {
 	Port uint16

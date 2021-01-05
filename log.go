@@ -27,7 +27,7 @@ func write(b buffer) {
 }
 
 // middleware for log
-func (s *Server) log(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) log(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next(w, r)
