@@ -14,7 +14,42 @@ import (
 // openssl req  -new  -newkey rsa:2048  -nodes  -keyout /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key  -out /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.csr
 // openssl  x509  -req  -days 365  -in /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.csr  -signkey /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key  -out /Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt
 
+var (
+	msrv = func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This is middleware for all handlers in this server")
+			next(w, r)
+		}
+	}
+
+	m1 = func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This middleware m1 : ", os.Getpid())
+			next(w, r)
+		}
+	}
+
+	mg1 = func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This is group 1 middleware: ", os.Getpid())
+			next(w, r)
+		}
+	}
+
+	gh2 = func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("This is group 1 handler 2 middleware: ", os.Getpid())
+			next(w, r)
+		}
+	}
+)
+
 func main() {
+	// Main()
+	MainWithBuilder()
+}
+
+func Main() {
 	srv := _httpserver.New(&_httpserver.Opts{
 		Port:         8080,
 		EnableLogger: true,
@@ -27,44 +62,46 @@ func main() {
 	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.crt",
 	// 	"/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/localhost.key",
 	// )
-	msrv := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("This is middleware for all handlers in this server")
-			next(w, r)
-		}
-	}
+
 	srv.Use(msrv)
-	m1 := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("This middleware m1 : ", os.Getpid())
-			next(w, r)
-		}
-	}
+
 	// serve files inside example/
 	srv.FILES("/html/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/")
 	jsFiles := srv.Group("/js")
 	jsFiles.FILES("/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/")
+
+	// endpoints
 	srv.GET("/handler1", Handler1, m1)
 	srv.POST("/handler2", Handler2)
-	mg1 := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("This is group 1 middleware: ", os.Getpid())
-			next(w, r)
-		}
-	}
+
 	g1 := srv.Group("/v1", mg1)
 	g1.GET("/handler1", Handler1)
-	gh2 := func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("This is group 1 handler 2 middleware: ", os.Getpid())
-			next(w, r)
-		}
-	}
+
 	g1.POST("/handler2", Handler2, gh2)
 	srv.GET("/single-template", HandlerSingleTemplate)
 	srv.GET("/multi-template", HandlerMultipleTemplate)
 	srv.GET("/multi-template-c", HandlerMultipleTemplateCombined)
 	srv.Run()
+}
+
+func MainWithBuilder() {
+	_httpserver.Build(8080).
+		WithLogger().
+		WithMiddleware(msrv).
+		AddFilesServer("/html/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/").
+		AddGroup("/js").
+		AddGroupFilesServer("/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/").
+		Return().
+		AddHandler(http.MethodGet, "/handler1", Handler1, m1).
+		AddHandler(http.MethodPost, "/handler2", Handler2).
+		AddGroup("/v1", mg1).
+		AddGroupHandler(http.MethodGet, "/handler1", Handler1).
+		AddGroupHandler(http.MethodPost, "/handler2", Handler2, gh2).
+		Return().
+		AddHandler(http.MethodGet, "/single-template", HandlerSingleTemplate).
+		AddHandler(http.MethodGet, "/multi-template", HandlerMultipleTemplate).
+		AddHandler(http.MethodGet, "/multi-template-c", HandlerMultipleTemplateCombined).
+		Run()
 }
 
 func Handler1(w http.ResponseWriter, r *http.Request) {

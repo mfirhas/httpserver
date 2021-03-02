@@ -27,17 +27,12 @@ func (g *Group) HEAD(path string, handler http.HandlerFunc, middlewares ...Middl
 	g.server.handlers.HEAD(fmt.Sprintf("%s%s", g.prefix, path), f(g.server.recoverPanic(g.chainMiddlewares(handler, middlewares...))))
 }
 
-func (g *Group) HEADGET(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	g.server.handlers.HEAD(fmt.Sprintf("%s%s", g.prefix, path), f(g.server.recoverPanic(g.chainMiddlewares(handler, middlewares...))))
-	g.server.handlers.GET(fmt.Sprintf("%s%s", g.prefix, path), f(g.server.recoverPanic(g.chainMiddlewares(handler, middlewares...))))
-}
-
 func (g *Group) POST(path string, handler http.HandlerFunc, middlewares ...Middleware) {
 	g.server.handlers.POST(fmt.Sprintf("%s%s", g.prefix, path), f(g.server.recoverPanic(g.chainMiddlewares(handler, middlewares...))))
 }
 
 func (g *Group) PUT(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	g.server.handlers.POST(fmt.Sprintf("%s%s", g.prefix, path), f(g.server.recoverPanic(g.chainMiddlewares(handler, middlewares...))))
+	g.server.handlers.PUT(fmt.Sprintf("%s%s", g.prefix, path), f(g.server.recoverPanic(g.chainMiddlewares(handler, middlewares...))))
 }
 
 func (g *Group) DELETE(path string, handler http.HandlerFunc, middlewares ...Middleware) {

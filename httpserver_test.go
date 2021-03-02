@@ -142,10 +142,6 @@ func TestHEAD(t *testing.T) {
 	testSrv.HEAD("/head", testHandler, TestMiddleware)
 }
 
-func TestHEADGET(t *testing.T) {
-	testSrv.HEADGET("/headget", testHandler, TestMiddleware)
-}
-
 func TestPOST(t *testing.T) {
 	testSrv.POST("/post", testHandler, TestMiddleware)
 }

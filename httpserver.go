@@ -23,11 +23,12 @@ type Server struct {
 	cors        *_cors.Cors
 	middlewares []Middleware
 
-	panicHandler    func(w http.ResponseWriter, r *http.Request, rcv ...interface{})
+	panicHandler    PanicHandler
 	notFoundHandler http.Handler
 }
 
 type Middleware func(next http.HandlerFunc, params ...interface{}) http.HandlerFunc
+type PanicHandler func(w http.ResponseWriter, r *http.Request, rcv ...interface{})
 
 type Opts struct {
 	Port uint16
@@ -46,7 +47,7 @@ type Opts struct {
 
 	// PanicHandler triggered if panic happened.
 	// rcv: first param is argument retrieved from `recover()` function.
-	PanicHandler func(w http.ResponseWriter, r *http.Request, rcv ...interface{})
+	PanicHandler PanicHandler
 
 	// NotFoundHandler triggered if path not found.
 	// If empty then default is used.
@@ -203,17 +204,12 @@ func (s *Server) HEAD(path string, handler http.HandlerFunc, middlewares ...Midd
 	s.handlers.HEAD(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
-func (s *Server) HEADGET(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.HEAD(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
-	s.handlers.GET(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
-}
-
 func (s *Server) POST(path string, handler http.HandlerFunc, middlewares ...Middleware) {
 	s.handlers.POST(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) PUT(path string, handler http.HandlerFunc, middlewares ...Middleware) {
-	s.handlers.POST(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
+	s.handlers.PUT(path, f(s.recoverPanic(s.chainMiddlewares(handler, middlewares...))))
 }
 
 func (s *Server) DELETE(path string, handler http.HandlerFunc, middlewares ...Middleware) {

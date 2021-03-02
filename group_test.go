@@ -19,10 +19,6 @@ func TestGroupHEAD(t *testing.T) {
 	group.HEAD("/head", testHandler, TestMiddleware)
 }
 
-func TestGroupHEADGET(t *testing.T) {
-	group.HEADGET("/headget", testHandler, TestMiddleware)
-}
-
 func TestGroupPOST(t *testing.T) {
 	group.POST("/post", testHandler, TestMiddleware)
 }
