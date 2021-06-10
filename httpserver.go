@@ -181,14 +181,15 @@ func (s *Server) recoverPanic(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rcv := recover(); rcv != nil {
-				ResponseString(w, http.StatusInternalServerError, "httpserver got panic")
+				if s.panicHandler != nil {
+					s.panicHandler(w, r, rcv)
+				} else {
+					ResponseString(w, http.StatusInternalServerError, "httpserver got panic")
+				}
 				s.logger.Printf("%s | httpserver | %s | %s | %s | %s\n", time.Now().Format(time.RFC3339), "PANIC", r.Method, r.URL.Path, r.Header.Get("Request-Id"))
 				s.logger.Printf("☠️ ☠️ ☠️ ☠️ ☠️ ☠️  PANIC START (%s) ☠️ ☠️ ☠️ ☠️ ☠️ ☠️", r.Header.Get("Request-Id"))
 				debug.PrintStack()
 				s.logger.Printf("☠️ ☠️ ☠️ ☠️ ☠️ ☠️  PANIC END (%s) ☠️ ☠️ ☠️ ☠️ ☠️ ☠️", r.Header.Get("Request-Id"))
-				if s.panicHandler != nil {
-					s.panicHandler(w, r, rcv)
-				}
 				return
 			}
 		}()
