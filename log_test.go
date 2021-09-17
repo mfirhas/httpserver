@@ -3,6 +3,7 @@ package httpserver
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -18,7 +19,7 @@ func TestWriter(t *testing.T) {
 	w := make(buffer, 1)
 	b := []byte("test")
 	w <- b
-	go write(w)
+	go write(w, os.Stderr)
 }
 
 func TestLog(t *testing.T) {

@@ -2,8 +2,8 @@ package httpserver
 
 import (
 	"bufio"
+	"io"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -18,8 +18,8 @@ func (b buffer) Write(p []byte) (int, error) {
 }
 
 // worker to write log data from buffer memory into writer/file asynchronously.
-func write(b buffer) {
-	writer := bufio.NewWriter(os.Stderr)
+func write(b buffer, w io.Writer) {
+	writer := bufio.NewWriter(w)
 	for p := range b {
 		writer.Write(p)
 		writer.Flush()

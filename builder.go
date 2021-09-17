@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"crypto/tls"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -59,10 +60,16 @@ func (sb *ServerBuilder) WithCors(cors *Cors) *ServerBuilder {
 	return sb
 }
 
-func (sb *ServerBuilder) WithLogger() *ServerBuilder {
-	w := make(buffer, 10<<20)
-	go write(w)
-	sb.srv.logger = log.New(w, "", 0)
+func (sb *ServerBuilder) WithLogger(wr ...io.Writer) *ServerBuilder {
+	buff := make(buffer, 10<<20)
+	var w io.Writer = os.Stderr
+	if len(wr) > 0 {
+		if wr[0] != nil {
+			w = wr[0]
+		}
+	}
+	go write(buff, w)
+	sb.srv.logger = log.New(buff, "", 0)
 	sb.srv.middlewares = append(sb.srv.middlewares, sb.srv.log)
 	return sb
 }

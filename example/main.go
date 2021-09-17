@@ -53,6 +53,7 @@ func Main() {
 	srv := _httpserver.New(&_httpserver.Opts{
 		Port:         8080,
 		EnableLogger: true,
+		LogWriter:    os.Stdout,
 		IdleTimeout:  10,
 		PanicHandler: func(w http.ResponseWriter, r *http.Request, rcv ...interface{}) {
 			fmt.Println("PANIX.................................!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -86,7 +87,7 @@ func Main() {
 
 func MainWithBuilder() {
 	_httpserver.Build(8080).
-		WithLogger().
+		WithLogger(os.Stdout).
 		WithMiddleware(msrv).
 		AddFilesServer("/html/*filepath", "/Users/mfathirirhas/code/go/src/github.com/mfathirirhas/httpserver/example/").
 		AddGroup("/js").

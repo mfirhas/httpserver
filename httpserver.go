@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"crypto/tls"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ type Server struct {
 	port        uint16
 	idleTimeout time.Duration
 	logger      *log.Logger
+	logWriter   io.Writer
 	tls         *tls.Config
 	cors        *_cors.Cors
 	middlewares []Middleware
@@ -35,6 +37,9 @@ type Opts struct {
 
 	// EnableLogger enable logging for incoming requests
 	EnableLogger bool
+
+	// Logger logger file
+	LogWriter io.Writer
 
 	// IdleTimeout keep-alive timeout while waiting for the next request coming. If empty then no timeout.
 	IdleTimeout time.Duration
@@ -89,6 +94,7 @@ func New(opts *Opts) *Server {
 		port:            opts.Port,
 		idleTimeout:     opts.IdleTimeout,
 		logger:          log.New(os.Stderr, "", 0),
+		logWriter:       os.Stderr,
 		middlewares:     make([]Middleware, 0),
 		tls:             opts.TLS,
 		cors:            cors,
@@ -96,10 +102,13 @@ func New(opts *Opts) *Server {
 		panicHandler:    opts.PanicHandler,
 		notFoundHandler: notFoundHandler,
 	}
+	if opts.LogWriter != nil {
+		srv.logWriter = opts.LogWriter
+	}
 	if opts.EnableLogger {
-		w := make(buffer, 10<<20)
-		go write(w)
-		srv.logger = log.New(w, "", 0)
+		buff := make(buffer, 10<<20)
+		go write(buff, srv.logWriter)
+		srv.logger = log.New(buff, "", 0)
 		srv.middlewares = append(srv.middlewares, srv.log)
 	}
 	return srv

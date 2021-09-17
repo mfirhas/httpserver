@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	_router "github.com/julienschmidt/httprouter"
@@ -18,7 +19,7 @@ var (
 
 func newServer() *Server {
 	w := make(buffer, 10)
-	go write(w)
+	go write(w, os.Stderr)
 	cors := &Cors{}
 	srv := New(&Opts{
 		Port:            8080,
